@@ -1,0 +1,26 @@
+{
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [-10.0, 10.0],
+              [10.0, 10.0],
+              [10.0, -10.0],
+              [-10.0, -10.0],
+              [-10.0, 10.0]
+            ]
+          ]
+        },
+        "properties": {
+          "ADMIN": "Test Country",
+          "ISO_A2": "TC",
+          "POP_EST": 5000000
+        }
+      }
+    ]
+  }
+  
