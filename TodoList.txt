@@ -1,0 +1,15 @@
+ - Make globe lighter
+ - display countries in a solid way with a name
+
+ Plan
+ Make two json files and map these by country key
+    - country polygons
+    - data for each country mapping
+
+globe
+    - Display country polygons data
+    - Display heatmap on the data
+
+do something with github CI
+store map on a local storrage
+opacities to countries
