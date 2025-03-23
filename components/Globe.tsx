@@ -5,27 +5,62 @@ import { scaleSequentialSqrt } from "d3-scale";
 import { interpolateYlOrRd } from "d3-scale-chromatic";
 
 const GlobeComponent = () => {
-  const [geoJsonData, setGeoJsonData] = useState(null);
   const globeRef = useRef(null);
 
   // Fetch the GeoJSON data from the public directory
+  const [geoJsonData, setGeoJsonData] = useState(null);
+  const [countriesData, setCountriesData] = useState(null);
+
   useEffect(() => {
-    const fetchData = async () => {
-      const response = await fetch('/countries.geojson');
-      const data = await response.json();
-      setGeoJsonData(data);
+    const fetchPolygonsData = async () => {
+      try {
+        const cachedGeoJsonData = localStorage.getItem('geoJsonData');
+        if (cachedGeoJsonData) {
+          console.log("Using cached geoJsonData");
+          setGeoJsonData(JSON.parse(cachedGeoJsonData));
+        } else {
+          // If not in localStorage, fetch it
+          const response = await fetch('/countries.geojson');
+          const data = await response.json();
+          setGeoJsonData(data);
+          localStorage.setItem('geoJsonData', JSON.stringify(data));
+        }
+      } catch (error) {
+        console.error("Error fetching polygons:", error);
+      }
     };
 
-    fetchData();
+    fetchPolygonsData();
+  }, []);
+  
+  useEffect(() => {
+    const fetchCountriesData = async () => {
+      try {
+        const response = await fetch('/countries_with_ids.json');
+        const data = await response.json();
+        setCountriesData(data);
+      } catch (error) {
+        console.error("Error fetching countries:", error);
+      }
+    };
+    fetchCountriesData();
   }, []);
 
   useEffect(() => {
+    
     // Wait until the data is loaded
-    if (!geoJsonData) return;
+    if (!geoJsonData || !countriesData)  return;
 
     const colorScale = scaleSequentialSqrt(interpolateYlOrRd);
-    const getVal = (feat) =>
-      feat.properties.GDP_MD_EST / Math.max(1e5, feat.properties.POP_EST || 1);
+
+    const getVal = (feat) => {
+      if (!countriesData) return 0;
+    
+      const countryCode = feat.properties.ISO_A3; // Get country ISO_A3 code
+      const val = countriesData[countryCode] ? countriesData[countryCode].value : 0;
+
+      return val/2;
+    };
 
     const script = document.createElement('script');
     script.src = '//unpkg.com/globe.gl';
@@ -50,21 +85,11 @@ const GlobeComponent = () => {
           .polygonCapColor(d => d === hoverD ? 'steelblue' : colorScale(getVal(d)))
         )
         .polygonsTransitionDuration(300);
-
-        // .hexPolygonResolution(3)
-        // .hexPolygonMargin(0.3)
-        // .hexPolygonUseDots(true)
-        // .hexPolygonColor(() => `#${Math.round(Math.random() * Math.pow(2, 24)).toString(16).padStart(6, '0')}`)
-        // .hexPolygonLabel(({ properties: d }) => `
-        //   <b>${d.ADMIN} (${d.ISO_A2})</b> <br />
-        //   Population: <i>${d.POP_EST}</i>
-        // `);
         globeRef.current = world;
-
     };
 
     document.body.appendChild(script);
-  }, [geoJsonData]); // Trigger this effect when geoJsonData is loaded
+  }, [geoJsonData, countriesData]); // Trigger this effect when geoJsonData is loaded
 
   // Handle dynamic resizing
   useEffect(() => {
@@ -82,7 +107,7 @@ const GlobeComponent = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  return <div id="globeViz" style={{ width: '100%', height: '100%', backgroundColor: "black"}}></div>;
+  return <div id="globeViz" style={{ width: '100%', height: '100%'}}></div>;
 };
 
 export default GlobeComponent;
